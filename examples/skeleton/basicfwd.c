@@ -10,6 +10,7 @@
 #include <rte_cycles.h>
 #include <rte_lcore.h>
 #include <rte_mbuf.h>
+#include <netinet/in.h>
 
 #define RX_RING_SIZE 1024
 #define TX_RING_SIZE 1024
@@ -116,6 +117,7 @@ ipv4_addr_to_dot(uint32_t be_ipv4_addr, char *buf)
 	uint32_t ipv4_addr;
 
 	ipv4_addr = rte_be_to_cpu_32(be_ipv4_addr);
+	// printf("ip in hex %x",ipv4_addr);
 	sprintf(buf, "%d.%d.%d.%d", (ipv4_addr >> 24) & 0xFF,
 		(ipv4_addr >> 16) & 0xFF, (ipv4_addr >> 8) & 0xFF,
 		ipv4_addr & 0xFF);
@@ -300,7 +302,18 @@ lcore_main(void)
 	struct rte_ipv4_hdr *ip_h;
 	// struct rte_icmp_hdr *icmp_h;
 	struct rte_ether_addr eth_addr;
+	struct rte_tcp_hdr *tcp_h;
+	struct rte_udp_hdr *udp_h;
 	uint16_t eth_type;
+	uint16_t src_port;
+	uint16_t dst_port;
+	union {
+		struct rte_ether_hdr *eth;
+		struct rte_ipv4_hdr *ipv4;
+		struct rte_tcp_hdr *tcp;
+		struct rte_udp_hdr *udp;
+		uint8_t *byte;
+	} h;
 
 	/*
 	 * Check that the port is on the same NUMA node as the polling thread
@@ -337,6 +350,34 @@ lcore_main(void)
 			for (i=0; i<nb_rx; i++)
 			{
 				pkt = bufs[i];
+
+				// h.eth = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
+				// printf(" eth type %d",RTE_BE_TO_CPU_16(h.eth->ether_type));
+				// if (RTE_BE_TO_CPU_16(h.eth->ether_type) == RTE_ETHER_TYPE_IPV4)
+				// {
+				// 	h.eth++;
+				// 	ipv4_addr_dump("  IPV4: src=", h.ipv4->src_addr);
+				// 	ipv4_addr_dump(" dst=", ip_h->dst_addr);
+				// 	printf(" proto=%d (%s)\n",
+				// 		ip_h->next_proto_id,
+				// 		ip_proto_name(ip_h->next_proto_id));
+				// 	if (RTE_BE_TO_CPU_16(h.ipv4->next_proto_id) == IPPROTO_UDP)
+				// 	{
+				// 		h.ipv4++;
+				// 		src_port = RTE_BE_TO_CPU_16(h.udp->src_port);
+				// 		dst_port = RTE_BE_TO_CPU_16(h.udp->dst_port);
+				// 		printf("src port %d and dst port %d",src_port, dst_port);
+
+				// 	}
+				// 	else if (RTE_BE_TO_CPU_16(h.ipv4->next_proto_id) == IPPROTO_TCP)
+				// 	{
+				// 		h.ipv4++;
+				// 		src_port = RTE_BE_TO_CPU_16(h.tcp->src_port);
+				// 		dst_port = RTE_BE_TO_CPU_16(h.tcp->dst_port);
+				// 		printf("src port %d and dst port %d",src_port, dst_port);
+
+				// 	}
+				// }	
 				eth_h = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
 				eth_type = RTE_BE_TO_CPU_16(eth_h->ether_type);
 				if (eth_type == RTE_ETHER_TYPE_IPV4) 
@@ -347,6 +388,20 @@ lcore_main(void)
 					printf(" proto=%d (%s)\n",
 						ip_h->next_proto_id,
 						ip_proto_name(ip_h->next_proto_id));
+					if (ip_h->next_proto_id == IPPROTO_TCP)
+					{
+						tcp_h = (struct rte_tcp_hdr *) ((char *)ip_h + sizeof(struct rte_ipv4_hdr));
+						src_port = RTE_BE_TO_CPU_16(tcp_h->src_port);
+						dst_port = RTE_BE_TO_CPU_16(tcp_h->dst_port);
+						printf("src port %d and dst port %d\n",src_port, dst_port);
+					}
+					else if (ip_h->next_proto_id == IPPROTO_UDP)
+					{
+						udp_h = (struct rte_udp_hdr *) ((char *)ip_h + sizeof(struct rte_ipv4_hdr));
+						src_port = RTE_BE_TO_CPU_16(udp_h->src_port);
+						dst_port = RTE_BE_TO_CPU_16(udp_h->dst_port);
+						printf("src port %d and dst port %d\n",src_port, dst_port);
+					}
 				// 	uint32_t src_ip = rte_be_to_cpu_32(ip_hdr->src_addr);
 				// 	printf("Received packet from IP: %u.%u.%u.%u\n",
 				// (src_ip >> 24) & 0xFF, (src_ip >> 16) & 0xFF,
