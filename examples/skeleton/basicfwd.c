@@ -18,6 +18,9 @@
 #define MBUF_CACHE_SIZE 250
 #define BURST_SIZE 32
 
+#define RTE_BE_TO_CPU_16(be_16_v) \
+	(uint16_t) ((((be_16_v) & 0xFF) << 8) | ((be_16_v) >> 8))
+
 /* basicfwd.c: Basic DPDK skeleton forwarding example. */
 
 /*
@@ -107,6 +110,178 @@ port_init(uint16_t port, struct rte_mempool *mbuf_pool)
 }
 /* >8 End of main functional part of port initialization. */
 
+static void
+ipv4_addr_to_dot(uint32_t be_ipv4_addr, char *buf)
+{
+	uint32_t ipv4_addr;
+
+	ipv4_addr = rte_be_to_cpu_32(be_ipv4_addr);
+	sprintf(buf, "%d.%d.%d.%d", (ipv4_addr >> 24) & 0xFF,
+		(ipv4_addr >> 16) & 0xFF, (ipv4_addr >> 8) & 0xFF,
+		ipv4_addr & 0xFF);
+}
+
+static void
+ipv4_addr_dump(const char *what, uint32_t be_ipv4_addr)
+{
+	char buf[16];
+
+	ipv4_addr_to_dot(be_ipv4_addr, buf);
+	if (what)
+		printf("%s", what);
+	printf("%s", buf);
+}
+static const char *
+ip_proto_name(uint16_t ip_proto)
+{
+	static const char * ip_proto_names[] = {
+		"IP6HOPOPTS", /**< IP6 hop-by-hop options */
+		"ICMP",       /**< control message protocol */
+		"IGMP",       /**< group mgmt protocol */
+		"GGP",        /**< gateway^2 (deprecated) */
+		"IPv4",       /**< IPv4 encapsulation */
+
+		"UNASSIGNED",
+		"TCP",        /**< transport control protocol */
+		"ST",         /**< Stream protocol II */
+		"EGP",        /**< exterior gateway protocol */
+		"PIGP",       /**< private interior gateway */
+
+		"RCC_MON",    /**< BBN RCC Monitoring */
+		"NVPII",      /**< network voice protocol*/
+		"PUP",        /**< pup */
+		"ARGUS",      /**< Argus */
+		"EMCON",      /**< EMCON */
+
+		"XNET",       /**< Cross Net Debugger */
+		"CHAOS",      /**< Chaos*/
+		"UDP",        /**< user datagram protocol */
+		"MUX",        /**< Multiplexing */
+		"DCN_MEAS",   /**< DCN Measurement Subsystems */
+
+		"HMP",        /**< Host Monitoring */
+		"PRM",        /**< Packet Radio Measurement */
+		"XNS_IDP",    /**< xns idp */
+		"TRUNK1",     /**< Trunk-1 */
+		"TRUNK2",     /**< Trunk-2 */
+
+		"LEAF1",      /**< Leaf-1 */
+		"LEAF2",      /**< Leaf-2 */
+		"RDP",        /**< Reliable Data */
+		"IRTP",       /**< Reliable Transaction */
+		"TP4",        /**< tp-4 w/ class negotiation */
+
+		"BLT",        /**< Bulk Data Transfer */
+		"NSP",        /**< Network Services */
+		"INP",        /**< Merit Internodal */
+		"SEP",        /**< Sequential Exchange */
+		"3PC",        /**< Third Party Connect */
+
+		"IDPR",       /**< InterDomain Policy Routing */
+		"XTP",        /**< XTP */
+		"DDP",        /**< Datagram Delivery */
+		"CMTP",       /**< Control Message Transport */
+		"TPXX",       /**< TP++ Transport */
+
+		"ILTP",       /**< IL transport protocol */
+		"IPv6_HDR",   /**< IP6 header */
+		"SDRP",       /**< Source Demand Routing */
+		"IPv6_RTG",   /**< IP6 routing header */
+		"IPv6_FRAG",  /**< IP6 fragmentation header */
+
+		"IDRP",       /**< InterDomain Routing*/
+		"RSVP",       /**< resource reservation */
+		"GRE",        /**< General Routing Encap. */
+		"MHRP",       /**< Mobile Host Routing */
+		"BHA",        /**< BHA */
+
+		"ESP",        /**< IP6 Encap Sec. Payload */
+		"AH",         /**< IP6 Auth Header */
+		"INLSP",      /**< Integ. Net Layer Security */
+		"SWIPE",      /**< IP with encryption */
+		"NHRP",       /**< Next Hop Resolution */
+
+		"UNASSIGNED",
+		"UNASSIGNED",
+		"UNASSIGNED",
+		"ICMPv6",     /**< ICMP6 */
+		"IPv6NONEXT", /**< IP6 no next header */
+
+		"Ipv6DSTOPTS",/**< IP6 destination option */
+		"AHIP",       /**< any host internal protocol */
+		"CFTP",       /**< CFTP */
+		"HELLO",      /**< "hello" routing protocol */
+		"SATEXPAK",   /**< SATNET/Backroom EXPAK */
+
+		"KRYPTOLAN",  /**< Kryptolan */
+		"RVD",        /**< Remote Virtual Disk */
+		"IPPC",       /**< Pluribus Packet Core */
+		"ADFS",       /**< Any distributed FS */
+		"SATMON",     /**< Satnet Monitoring */
+
+		"VISA",       /**< VISA Protocol */
+		"IPCV",       /**< Packet Core Utility */
+		"CPNX",       /**< Comp. Prot. Net. Executive */
+		"CPHB",       /**< Comp. Prot. HeartBeat */
+		"WSN",        /**< Wang Span Network */
+
+		"PVP",        /**< Packet Video Protocol */
+		"BRSATMON",   /**< BackRoom SATNET Monitoring */
+		"ND",         /**< Sun net disk proto (temp.) */
+		"WBMON",      /**< WIDEBAND Monitoring */
+		"WBEXPAK",    /**< WIDEBAND EXPAK */
+
+		"EON",        /**< ISO cnlp */
+		"VMTP",       /**< VMTP */
+		"SVMTP",      /**< Secure VMTP */
+		"VINES",      /**< Banyon VINES */
+		"TTP",        /**< TTP */
+
+		"IGP",        /**< NSFNET-IGP */
+		"DGP",        /**< dissimilar gateway prot. */
+		"TCF",        /**< TCF */
+		"IGRP",       /**< Cisco/GXS IGRP */
+		"OSPFIGP",    /**< OSPFIGP */
+
+		"SRPC",       /**< Strite RPC protocol */
+		"LARP",       /**< Locus Address Resolution */
+		"MTP",        /**< Multicast Transport */
+		"AX25",       /**< AX.25 Frames */
+		"4IN4",       /**< IP encapsulated in IP */
+
+		"MICP",       /**< Mobile Int.ing control */
+		"SCCSP",      /**< Semaphore Comm. security */
+		"ETHERIP",    /**< Ethernet IP encapsulation */
+		"ENCAP",      /**< encapsulation header */
+		"AES",        /**< any private encr. scheme */
+
+		"GMTP",       /**< GMTP */
+		"IPCOMP",     /**< payload compression (IPComp) */
+		"UNASSIGNED",
+		"UNASSIGNED",
+		"PIM",        /**< Protocol Independent Mcast */
+	};
+
+	if (ip_proto < RTE_DIM(ip_proto_names))
+		return ip_proto_names[ip_proto];
+	switch (ip_proto) {
+#ifdef IPPROTO_PGM
+	case IPPROTO_PGM:  /**< PGM */
+		return "PGM";
+#endif
+	case IPPROTO_SCTP:  /**< Stream Control Transport Protocol */
+		return "SCTP";
+#ifdef IPPROTO_DIVERT
+	case IPPROTO_DIVERT: /**< divert pseudo-protocol */
+		return "DIVERT";
+#endif
+	case IPPROTO_RAW: /**< raw IP packet */
+		return "RAW";
+	default:
+		break;
+	}
+	return "UNASSIGNED";
+}
 /*
  * The lcore main. This is the main thread that does the work, reading from
  * an input port and writing to an output port.
@@ -117,6 +292,15 @@ static __rte_noreturn void
 lcore_main(void)
 {
 	uint16_t port;
+	uint16_t i;
+	struct rte_mbuf *pkt;
+	struct rte_ether_hdr *eth_h;
+	// struct rte_vlan_hdr *vlan_h;
+	// struct rte_arp_hdr  *arp_h;
+	struct rte_ipv4_hdr *ip_h;
+	// struct rte_icmp_hdr *icmp_h;
+	struct rte_ether_addr eth_addr;
+	uint16_t eth_type;
 
 	/*
 	 * Check that the port is on the same NUMA node as the polling thread
@@ -134,7 +318,9 @@ lcore_main(void)
 			rte_lcore_id());
 
 	/* Main work of application loop. 8< */
+
 	for (;;) {
+		// printf("here in the start\n");
 		/*
 		 * Receive packets on a port and forward them on the paired
 		 * port. The mapping is 0 -> 1, 1 -> 0, 2 -> 3, 3 -> 2, etc.
@@ -148,9 +334,31 @@ lcore_main(void)
 
 			if (unlikely(nb_rx == 0))
 				continue;
-
+			for (i=0; i<nb_rx; i++)
+			{
+				pkt = bufs[i];
+				eth_h = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
+				eth_type = RTE_BE_TO_CPU_16(eth_h->ether_type);
+				if (eth_type == RTE_ETHER_TYPE_IPV4) 
+				{
+					ip_h = (struct rte_ipv4_hdr *) ((char *)eth_h + sizeof(struct rte_ether_hdr));
+					ipv4_addr_dump("  IPV4: src=", ip_h->src_addr);
+					ipv4_addr_dump(" dst=", ip_h->dst_addr);
+					printf(" proto=%d (%s)\n",
+						ip_h->next_proto_id,
+						ip_proto_name(ip_h->next_proto_id));
+				// 	uint32_t src_ip = rte_be_to_cpu_32(ip_hdr->src_addr);
+				// 	printf("Received packet from IP: %u.%u.%u.%u\n",
+				// (src_ip >> 24) & 0xFF, (src_ip >> 16) & 0xFF,
+				// (src_ip >> 8) & 0xFF, src_ip & 0xFF);
+				}
+			}
+			// printf("%u\n", nb_rx);
+			// printf("here");
 			/* Send burst of TX packets, to second port of pair. */
-			const uint16_t nb_tx = rte_eth_tx_burst(port ^ 1, 0,
+			// const uint16_t nb_tx = rte_eth_tx_burst(port ^ 1, 0,
+			// 		bufs, nb_rx);
+			const uint16_t nb_tx = rte_eth_tx_burst(port, 0,
 					bufs, nb_rx);
 
 			/* Free any unsent packets. */
@@ -187,8 +395,8 @@ main(int argc, char *argv[])
 
 	/* Check that there is an even number of ports to send/receive on. */
 	nb_ports = rte_eth_dev_count_avail();
-	if (nb_ports < 2 || (nb_ports & 1))
-		rte_exit(EXIT_FAILURE, "Error: number of ports must be even\n");
+	// if (nb_ports < 2 || (nb_ports & 1))
+	// 	rte_exit(EXIT_FAILURE, "Error: number of ports must be even\n");
 
 	/* Creates a new mempool in memory to hold the mbufs. */
 
