@@ -22,6 +22,14 @@
 #define RTE_BE_TO_CPU_16(be_16_v) \
 	(uint16_t) ((((be_16_v) & 0xFF) << 8) | ((be_16_v) >> 8))
 
+struct pkt_tuple
+{
+	uint32_t src_ip;
+	uint32_t dst_ip;
+	uint16_t src_port;
+	uint16_t dst_port;
+	uint8_t proto;
+};
 /* basicfwd.c: Basic DPDK skeleton forwarding example. */
 
 /*
@@ -305,6 +313,9 @@ lcore_main(void)
 	struct rte_tcp_hdr *tcp_h;
 	struct rte_udp_hdr *udp_h;
 	uint16_t eth_type;
+	uint32_t ipv4_src_addr;
+	uint32_t ipv4_dst_addr;
+	uint8_t proto;
 	uint16_t src_port;
 	uint16_t dst_port;
 	union {
@@ -342,6 +353,9 @@ lcore_main(void)
 
 			/* Get burst of RX packets, from first port of pair. */
 			struct rte_mbuf *bufs[BURST_SIZE];
+			struct pkt_tuple * tuple_data;
+			tuple_data = malloc(sizeof(struct pkt_tuple));
+
 			const uint16_t nb_rx = rte_eth_rx_burst(port, 0,
 					bufs, BURST_SIZE);
 
@@ -351,39 +365,19 @@ lcore_main(void)
 			{
 				pkt = bufs[i];
 
-				// h.eth = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
-				// printf(" eth type %d",RTE_BE_TO_CPU_16(h.eth->ether_type));
-				// if (RTE_BE_TO_CPU_16(h.eth->ether_type) == RTE_ETHER_TYPE_IPV4)
-				// {
-				// 	h.eth++;
-				// 	ipv4_addr_dump("  IPV4: src=", h.ipv4->src_addr);
-				// 	ipv4_addr_dump(" dst=", ip_h->dst_addr);
-				// 	printf(" proto=%d (%s)\n",
-				// 		ip_h->next_proto_id,
-				// 		ip_proto_name(ip_h->next_proto_id));
-				// 	if (RTE_BE_TO_CPU_16(h.ipv4->next_proto_id) == IPPROTO_UDP)
-				// 	{
-				// 		h.ipv4++;
-				// 		src_port = RTE_BE_TO_CPU_16(h.udp->src_port);
-				// 		dst_port = RTE_BE_TO_CPU_16(h.udp->dst_port);
-				// 		printf("src port %d and dst port %d",src_port, dst_port);
-
-				// 	}
-				// 	else if (RTE_BE_TO_CPU_16(h.ipv4->next_proto_id) == IPPROTO_TCP)
-				// 	{
-				// 		h.ipv4++;
-				// 		src_port = RTE_BE_TO_CPU_16(h.tcp->src_port);
-				// 		dst_port = RTE_BE_TO_CPU_16(h.tcp->dst_port);
-				// 		printf("src port %d and dst port %d",src_port, dst_port);
-
-				// 	}
-				// }	
 				eth_h = rte_pktmbuf_mtod(pkt, struct rte_ether_hdr *);
 				eth_type = RTE_BE_TO_CPU_16(eth_h->ether_type);
 				if (eth_type == RTE_ETHER_TYPE_IPV4) 
 				{
 					ip_h = (struct rte_ipv4_hdr *) ((char *)eth_h + sizeof(struct rte_ether_hdr));
 					ipv4_addr_dump("  IPV4: src=", ip_h->src_addr);
+					// printf("src addr: %x\n", rte_be_to_cpu_32(ip_h->src_addr));
+					// printf("dst addr: %x\n", rte_be_to_cpu_32(ip_h->dst_addr));
+					// ipv4_src_addr = rte_be_to_cpu_32(ip_h->src_addr);
+					// ipv4_dst_addr = rte_be_to_cpu_32(ip_h->dst_addr);
+					// proto = ip_h->next_proto_id;
+
+					// print proto
 					ipv4_addr_dump(" dst=", ip_h->dst_addr);
 					printf(" proto=%d (%s)\n",
 						ip_h->next_proto_id,
@@ -393,19 +387,34 @@ lcore_main(void)
 						tcp_h = (struct rte_tcp_hdr *) ((char *)ip_h + sizeof(struct rte_ipv4_hdr));
 						src_port = RTE_BE_TO_CPU_16(tcp_h->src_port);
 						dst_port = RTE_BE_TO_CPU_16(tcp_h->dst_port);
-						printf("src port %d and dst port %d\n",src_port, dst_port);
+						tuple_data->src_ip = ip_h->src_addr;
+						tuple_data->dst_ip = ip_h->dst_addr;
+						tuple_data->src_port = src_port;
+						tuple_data->dst_port = dst_port;
+						tuple_data->proto = ip_h->next_proto_id;
+						// printf("src port %d and dst port %d\n",src_port, dst_port);
 					}
 					else if (ip_h->next_proto_id == IPPROTO_UDP)
 					{
 						udp_h = (struct rte_udp_hdr *) ((char *)ip_h + sizeof(struct rte_ipv4_hdr));
 						src_port = RTE_BE_TO_CPU_16(udp_h->src_port);
 						dst_port = RTE_BE_TO_CPU_16(udp_h->dst_port);
-						printf("src port %d and dst port %d\n",src_port, dst_port);
+						tuple_data->src_ip = ip_h->src_addr;
+						tuple_data->dst_ip = ip_h->dst_addr;
+						tuple_data->src_port = src_port;
+						tuple_data->dst_port = dst_port;
+						tuple_data->proto = ip_h->next_proto_id;
+						// printf("src port %d and dst port %d\n",src_port, dst_port);
 					}
-				// 	uint32_t src_ip = rte_be_to_cpu_32(ip_hdr->src_addr);
-				// 	printf("Received packet from IP: %u.%u.%u.%u\n",
-				// (src_ip >> 24) & 0xFF, (src_ip >> 16) & 0xFF,
-				// (src_ip >> 8) & 0xFF, src_ip & 0xFF);
+
+				}
+				if (tuple_data != NULL)
+				{
+					printf("src ip: %x\n", tuple_data->src_ip);
+					printf("dst ip: %x\n", tuple_data->dst_ip);
+					printf("src port: %d\n", tuple_data->src_port);
+					printf("dst port: %d\n", tuple_data->dst_port);
+					printf("proto: %d\n", tuple_data->proto);
 				}
 			}
 			// printf("%u\n", nb_rx);
