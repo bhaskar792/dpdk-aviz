@@ -12,6 +12,7 @@
 #include <rte_mbuf.h>
 #include <netinet/in.h>
 #include "addHash.h"
+#include "updateHashTable.h"
 
 #define RX_RING_SIZE 1024
 #define TX_RING_SIZE 1024
@@ -21,6 +22,8 @@
 #define BURST_SIZE 32
 
 struct hash_table ht = {0};
+struct Node* head = NULL;
+struct Node* tail = NULL;
 #define RTE_BE_TO_CPU_16(be_16_v) \
 	(uint16_t) ((((be_16_v) & 0xFF) << 8) | ((be_16_v) >> 8))
 
@@ -307,10 +310,7 @@ lcore_main(void)
 	uint16_t i;
 	struct rte_mbuf *pkt;
 	struct rte_ether_hdr *eth_h;
-	// struct rte_vlan_hdr *vlan_h;
-	// struct rte_arp_hdr  *arp_h;
 	struct rte_ipv4_hdr *ip_h;
-	// struct rte_icmp_hdr *icmp_h;
 	struct rte_ether_addr eth_addr;
 	struct rte_tcp_hdr *tcp_h;
 	struct rte_udp_hdr *udp_h;
@@ -375,7 +375,7 @@ lcore_main(void)
 				{
 					ip_h = (struct rte_ipv4_hdr *) ((char *)eth_h + sizeof(struct rte_ether_hdr));
 					tuple_data = malloc(sizeof(struct pkt_tuple));
-					ipv4_addr_dump("  IPV4: src=", ip_h->src_addr);
+					// ipv4_addr_dump("  IPV4: src=", ip_h->src_addr);
 					// printf("src addr: %x\n", rte_be_to_cpu_32(ip_h->src_addr));
 					// printf("dst addr: %x\n", rte_be_to_cpu_32(ip_h->dst_addr));
 					// ipv4_src_addr = rte_be_to_cpu_32(ip_h->src_addr);
@@ -383,10 +383,10 @@ lcore_main(void)
 					// proto = ip_h->next_proto_id;
 
 					// print proto
-					ipv4_addr_dump(" dst=", ip_h->dst_addr);
-					printf(" proto=%d (%s)\n",
-						ip_h->next_proto_id,
-						ip_proto_name(ip_h->next_proto_id));
+					// ipv4_addr_dump(" dst=", ip_h->dst_addr);
+					// printf(" proto=%d (%s)\n",
+					// 	ip_h->next_proto_id,
+					// 	ip_proto_name(ip_h->next_proto_id));
 					if (ip_h->next_proto_id == IPPROTO_TCP)
 					{
 						tcp_h = (struct rte_tcp_hdr *) ((char *)ip_h + sizeof(struct rte_ipv4_hdr));
@@ -414,37 +414,56 @@ lcore_main(void)
 					}
 
 				}
-				if (tuple_data != NULL)
+				if (tuple_data != NULL && tuple_data->src_port == 1)
 				{
-					printf("src ip: %x\n", tuple_data->src_ip);
-					printf("dst ip: %x\n", tuple_data->dst_ip);
-					printf("src port: %d\n", tuple_data->src_port);
-					printf("dst port: %d\n", tuple_data->dst_port);
-					printf("proto: %d\n", tuple_data->proto);
+					// printf("src ip: %x\n", tuple_data->src_ip);
+					// printf("dst ip: %x\n", tuple_data->dst_ip);
+					// printf("src port: %d\n", tuple_data->src_port);
+					// printf("dst port: %d\n", tuple_data->dst_port);
+					// printf("proto: %d\n", tuple_data->proto);
 
 					// uint32_t rx_bytes = rte_pktmbuf_pkt_len(pkt);
-					insert(&ht, *tuple_data, rte_pktmbuf_pkt_len(pkt));
-					printf("Count for t1: %d\n", get_count(&ht, *tuple_data));
-					printf("size of bytes rx: %d\n", get_size(&ht, *tuple_data));
-					tuple_data = NULL;
+					int index = insert(&ht, *tuple_data, rte_pktmbuf_pkt_len(pkt));
+					printf("index: %d\n", index);
+					// printf("Count for t1: %d\n", get_count(&ht, *tuple_data));
+					// printf("size of bytes rx: %d\n", get_size(&ht, *tuple_data));
+					
+
+					insertNode(&head, &tail, index);
+					printList(head);
+					struct removedKeys* remove_hash = removeOldNodes(&head, &tail);
+					struct removedKeys* temp = remove_hash;
+					printf("\n\n");
+					printList(head);
+					
+					while (temp != NULL) {
+						printf("Removed key: %d ||", temp->keys);
+						// print src ip from ht with key
+						// printf("removed src ip: %x\n", ht.table[temp->keys]->t.src_ip);
+						temp = temp->next;
+					}
+					printf("------------------------\n");
+
+
 					save_hash_table(&ht, "hash_table.txt");
 				}
+				tuple_data = NULL;
 			}
 		}
 	}
 	/* >8 End of loop. */
 }
 
-// function to print hash table every 30 seconds
-static void
-print_hash_table(struct hash_table *ht)
-{
-	while(1)
-	{
-		sleep(30);
-		print(ht);
-	}
-}
+// // function to print hash table every 30 seconds
+// static void
+// print_hash_table(struct hash_table *ht)
+// {
+// 	while(1)
+// 	{
+// 		sleep(30);
+// 		print(ht);
+// 	}
+// }
 
 
 

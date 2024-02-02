@@ -11,6 +11,14 @@ struct Node {
     struct Node* prev;
 };
 
+// struct Node* head = NULL;
+// struct Node* tail = NULL;
+
+struct removedKeys {
+    int keys;
+    struct removedKeys* next;    
+};
+
 void deleteNode(struct Node** head_ref, struct Node** tail_ref, int key) {
     struct Node* temp = *head_ref;
     if (temp != NULL && temp->key == key) {
@@ -51,49 +59,66 @@ void insertNode(struct Node** head_ref, struct Node** tail_ref, int key) {
     if (*tail_ref == NULL) {
         *tail_ref = new_node;
     }
+    printf("INSERT head key  %ld", (*head_ref)->time);
+    printf("tail key %ld\n\n", (*tail_ref)->time);
+    // print all keys
+    // printf("all Key in list:");
+    // while(new_node != NULL) {
+    //     printf(" %d ||", new_node->key);
+    //     new_node = new_node->next;
+    // }
 }
 
-void removeOldNodes(struct Node** head_ref, struct Node** tail_ref) {
+struct removedKeys* removeOldNodes(struct Node** head_ref, struct Node** tail_ref) {
     struct Node* temp = *tail_ref;
     struct Node* head = *head_ref;
-    
-    
+    printf("REMOVE head key %ld", (*head_ref)->time);
+    printf("tail key %ld\n\n", (*tail_ref)->time);
     time_t now = time(NULL);
+    struct removedKeys* removed_keys_ptr = NULL;
+    struct removedKeys* removed_keys_head = NULL;
+    if (*head_ref == *tail_ref)
+        {
+            return removed_keys_head;
+        }
     while (temp != NULL) 
     {
-        if (temp->key == head->key)
-        {
-            // if (temp != head)
-            // {
-            //     temp = temp->prev;
-            // }
-            // else
-            // {
-            //     break;
-            // }
-            printf("temp->key: %d\n", temp->key);
+        // if (temp->key == head->key)
+        // {
+        //     printf("temp->key: %d\n", temp->key);
                 
-        }
-        if (now - temp->time > 5) 
+        // }
+        if (now - temp->time > 60) 
             {
                 if (temp->prev != NULL) 
                     {
                         temp->prev->next = temp->next;
                     } 
-                else 
-                    {
-                        *head_ref = temp->next;
-                    }
-                // if (temp->next != NULL) 
-                //     {
-                //         temp->next->prev = temp->prev;
-                //     } 
                 // else 
                 //     {
-                //         *tail_ref = temp->prev;
+                //         *head_ref = temp->next;
                 //     }
+                if (temp->key != head->key)
+                    {
+                        if (removed_keys_ptr == NULL)
+                        {
+                            removed_keys_ptr = (struct removedKeys*)malloc(sizeof(struct removedKeys));
+                            removed_keys_head = removed_keys_ptr;
+                        }
+                        else
+                        {
+                            removed_keys_ptr->next = (struct removedKeys*)malloc(sizeof(struct removedKeys));
+                            removed_keys_ptr = removed_keys_ptr->next;
+                        }
+                        removed_keys_ptr->next = NULL;
+                        removed_keys_ptr->keys = temp->key;
+                    } 
                 struct Node* to_free = temp;
                 temp = temp->prev;
+                if (to_free == *tail_ref) 
+                    {
+                    *tail_ref = temp;
+                    }
                 free(to_free);
             } 
         else 
@@ -101,7 +126,10 @@ void removeOldNodes(struct Node** head_ref, struct Node** tail_ref) {
                 break;
             }
     }
+
+    return removed_keys_head;
 }
+
 
 void printList(struct Node* node) {
     while (node != NULL) {
@@ -124,11 +152,35 @@ void printList(struct Node* node) {
 
 //     printf("now: %ld\n", time(NULL));
     
-//     // printf("now: %ld\n", time(NULL));
-//     removeOldNodes(&head, &tail);
+
+//     struct removedKeys* removed_keys_head = removeOldNodesNew(&head, &tail);
+//     // print removed keys array
+//     // int i = 0;
+//     // while (removed_keys[i] != -1) {
+//     //     printf("Removed key: %d\n", removed_keys[i]);
+//     //     i++;
+//     // }
+//     struct removedKeys* temp = removed_keys_head;
+//     while (temp != NULL) {
+//         printf("Removed key: %d\n", temp->keys);
+//         temp = temp->next;
+//     }
+
 //     sleep(3);
 //     printf("now: %ld\n", time(NULL));
-//     removeOldNodes(&head, &tail);
+//     // removeOldNodes(&head, &tail);
+//     removed_keys_head = removeOldNodesNew(&head, &tail);
+//     // print removed keys array
+//     // int i = 0;
+//     // while (removed_keys[i] != -1) {
+//     //     printf("Removed key: %d\n", removed_keys[i]);
+//     //     i++;
+//     // }
+//     temp = removed_keys_head;
+//     while (temp != NULL) {
+//         printf("Removed key: %d\n", temp->keys);
+//         temp = temp->next;
+//     }
 //     printf("List after removing old nodes:\n");
 //     printList(head);
 //     deleteNode(&head, &tail, 3);

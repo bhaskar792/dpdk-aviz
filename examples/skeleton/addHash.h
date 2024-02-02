@@ -58,7 +58,7 @@ int insert(struct hash_table *ht, struct pkt_tuple t, uint32_t rx_bytes) {
             return -1;
         }
     }
-    return 0;
+    return index;
 }
 
 uint32_t get_count(struct hash_table *ht, struct pkt_tuple t) {
