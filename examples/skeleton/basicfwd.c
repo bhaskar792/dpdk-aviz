@@ -11,6 +11,7 @@
 #include <rte_lcore.h>
 #include <rte_mbuf.h>
 #include <netinet/in.h>
+#include "addHash.h"
 
 #define RX_RING_SIZE 1024
 #define TX_RING_SIZE 1024
@@ -22,14 +23,14 @@
 #define RTE_BE_TO_CPU_16(be_16_v) \
 	(uint16_t) ((((be_16_v) & 0xFF) << 8) | ((be_16_v) >> 8))
 
-struct pkt_tuple
-{
-	uint32_t src_ip;
-	uint32_t dst_ip;
-	uint16_t src_port;
-	uint16_t dst_port;
-	uint8_t proto;
-};
+// struct pkt_tuple
+// {
+// 	uint32_t src_ip;
+// 	uint32_t dst_ip;
+// 	uint16_t src_port;
+// 	uint16_t dst_port;
+// 	uint8_t proto;
+// };
 /* basicfwd.c: Basic DPDK skeleton forwarding example. */
 
 /*
@@ -318,6 +319,7 @@ lcore_main(void)
 	uint8_t proto;
 	uint16_t src_port;
 	uint16_t dst_port;
+	struct hash_table ht = {0};
 	union {
 		struct rte_ether_hdr *eth;
 		struct rte_ipv4_hdr *ipv4;
@@ -354,8 +356,9 @@ lcore_main(void)
 			/* Get burst of RX packets, from first port of pair. */
 			struct rte_mbuf *bufs[BURST_SIZE];
 			struct pkt_tuple * tuple_data;
-			tuple_data = malloc(sizeof(struct pkt_tuple));
-
+			
+			//  set tuple data to NULL
+			
 			const uint16_t nb_rx = rte_eth_rx_burst(port, 0,
 					bufs, BURST_SIZE);
 
@@ -370,6 +373,7 @@ lcore_main(void)
 				if (eth_type == RTE_ETHER_TYPE_IPV4) 
 				{
 					ip_h = (struct rte_ipv4_hdr *) ((char *)eth_h + sizeof(struct rte_ether_hdr));
+					tuple_data = malloc(sizeof(struct pkt_tuple));
 					ipv4_addr_dump("  IPV4: src=", ip_h->src_addr);
 					// printf("src addr: %x\n", rte_be_to_cpu_32(ip_h->src_addr));
 					// printf("dst addr: %x\n", rte_be_to_cpu_32(ip_h->dst_addr));
@@ -387,6 +391,7 @@ lcore_main(void)
 						tcp_h = (struct rte_tcp_hdr *) ((char *)ip_h + sizeof(struct rte_ipv4_hdr));
 						src_port = RTE_BE_TO_CPU_16(tcp_h->src_port);
 						dst_port = RTE_BE_TO_CPU_16(tcp_h->dst_port);
+						
 						tuple_data->src_ip = ip_h->src_addr;
 						tuple_data->dst_ip = ip_h->dst_addr;
 						tuple_data->src_port = src_port;
@@ -415,6 +420,11 @@ lcore_main(void)
 					printf("src port: %d\n", tuple_data->src_port);
 					printf("dst port: %d\n", tuple_data->dst_port);
 					printf("proto: %d\n", tuple_data->proto);
+
+					
+					insert(&ht, *tuple_data);
+					printf("Count for t1: %d\n", get_count(&ht, *tuple_data));
+					tuple_data = NULL;
 				}
 			}
 			// printf("%u\n", nb_rx);
@@ -422,15 +432,15 @@ lcore_main(void)
 			/* Send burst of TX packets, to second port of pair. */
 			// const uint16_t nb_tx = rte_eth_tx_burst(port ^ 1, 0,
 			// 		bufs, nb_rx);
-			const uint16_t nb_tx = rte_eth_tx_burst(port, 0,
-					bufs, nb_rx);
+			// const uint16_t nb_tx = rte_eth_tx_burst(port, 0,
+			// 		bufs, nb_rx);
 
-			/* Free any unsent packets. */
-			if (unlikely(nb_tx < nb_rx)) {
-				uint16_t buf;
-				for (buf = nb_tx; buf < nb_rx; buf++)
-					rte_pktmbuf_free(bufs[buf]);
-			}
+			// /* Free any unsent packets. */
+			// if (unlikely(nb_tx < nb_rx)) {
+			// 	uint16_t buf;
+			// 	for (buf = nb_tx; buf < nb_rx; buf++)
+			// 		rte_pktmbuf_free(bufs[buf]);
+			// }
 		}
 	}
 	/* >8 End of loop. */
