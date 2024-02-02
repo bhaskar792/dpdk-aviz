@@ -20,6 +20,7 @@
 #define MBUF_CACHE_SIZE 250
 #define BURST_SIZE 32
 
+struct hash_table ht = {0};
 #define RTE_BE_TO_CPU_16(be_16_v) \
 	(uint16_t) ((((be_16_v) & 0xFF) << 8) | ((be_16_v) >> 8))
 
@@ -319,7 +320,7 @@ lcore_main(void)
 	uint8_t proto;
 	uint16_t src_port;
 	uint16_t dst_port;
-	struct hash_table ht = {0};
+	// struct hash_table ht = {0};
 	union {
 		struct rte_ether_hdr *eth;
 		struct rte_ipv4_hdr *ipv4;
@@ -429,30 +430,25 @@ lcore_main(void)
 					save_hash_table(&ht, "hash_table.txt");
 				}
 			}
-			// printf("%u\n", nb_rx);
-			// printf("here");
-			/* Send burst of TX packets, to second port of pair. */
-			// const uint16_t nb_tx = rte_eth_tx_burst(port ^ 1, 0,
-			// 		bufs, nb_rx);
-			// const uint16_t nb_tx = rte_eth_tx_burst(port, 0,
-			// 		bufs, nb_rx);
-
-			// /* Free any unsent packets. */
-			// if (unlikely(nb_tx < nb_rx)) {
-			// 	uint16_t buf;
-			// 	for (buf = nb_tx; buf < nb_rx; buf++)
-			// 		rte_pktmbuf_free(bufs[buf]);
-			// }
 		}
 	}
 	/* >8 End of loop. */
 }
-/* >8 End Basic forwarding application lcore. */
 
-/*
- * The main function, which does initialization and calls the per-lcore
- * functions.
- */
+// function to print hash table every 30 seconds
+static void
+print_hash_table(struct hash_table *ht)
+{
+	while(1)
+	{
+		sleep(30);
+		print(ht);
+	}
+}
+
+
+
+
 int
 main(int argc, char *argv[])
 {
