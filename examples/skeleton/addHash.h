@@ -17,6 +17,7 @@ struct pkt_tuple {
 struct packet_count {
     struct pkt_tuple t;
     uint32_t count;
+    uint32_t total_rx_bytes;
 };
 
 struct hash_table {
@@ -31,18 +32,20 @@ int tuples_are_equal(struct pkt_tuple a, struct pkt_tuple b) {
     return a.src_ip == b.src_ip && a.dst_ip == b.dst_ip && a.src_port == b.src_port && a.dst_port == b.dst_port && a.proto == b.proto;
 
 }
-void insert(struct hash_table *ht, struct pkt_tuple t) {
+int insert(struct hash_table *ht, struct pkt_tuple t, uint32_t rx_bytes) {
     int index = hash(t);
     if (ht->table[index] == NULL) {
         ht->table[index] = malloc(sizeof(struct packet_count));
         ht->table[index]->t = t;
         ht->table[index]->count = 1;
+        ht->table[index]->total_rx_bytes = rx_bytes;
     } else {
         // if (memcmp(&ht->table[index]->t, &t, sizeof(struct pkt_tuple)) == 0) {
         if (tuples_are_equal(ht->table[index]->t, t)) {
             ht->table[index]->count++;
+            ht->table[index]->total_rx_bytes += rx_bytes;
         } else {
-            printf("Collision detected in insert 2!\n");
+            printf("Collision detected in insert!\n");
             // print all values of the hash table
             for (int i = 0; i < MAX_TUPLES; i++) {
                 if (ht->table[i] != NULL) {
@@ -52,8 +55,10 @@ void insert(struct hash_table *ht, struct pkt_tuple t) {
             // print t
             printf("src_ip: %x, dst_ip: %x, src_port: %d, dst_port: %d, proto: %d\n", t.src_ip, t.dst_ip, t.src_port, t.dst_port, t.proto);
             printf("index %d\n",index);
+            return -1;
         }
     }
+    return 0;
 }
 
 uint32_t get_count(struct hash_table *ht, struct pkt_tuple t) {
@@ -70,6 +75,48 @@ uint32_t get_count(struct hash_table *ht, struct pkt_tuple t) {
         }
     }
 }
+
+uint32_t get_size(struct hash_table *ht, struct pkt_tuple t) {
+    int index = hash(t);
+    if (ht->table[index] == NULL) {
+        return 0;
+    } else {
+        // if (memcmp(&ht->table[index]->t, &t, sizeof(struct pkt_tuple)) == 0) {
+        if (tuples_are_equal(ht->table[index]->t, t)) {
+            return ht->table[index]->total_rx_bytes;
+        } else {
+            printf("Collision detected!\n");
+            return 0;
+        }
+    }
+}
+// convert hex to IP in dot form
+char *write_ipv4_addr(uint32_t ip) {
+    char *dot_ip = malloc(16);
+    sprintf(dot_ip, "%d.%d.%d.%d", (ip >> 24) & 0xFF, (ip >> 16) & 0xFF, (ip >> 8) & 0xFF, ip & 0xFF);
+    return dot_ip;
+}
+// save hash table data to file
+void save_hash_table(struct hash_table *ht, char *filename) {
+    // delete the file if it exists
+    // remove(filename);
+    FILE *f = fopen (filename,
+                    "w");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    for (int i = 0; i < MAX_TUPLES; i++) {
+        if (ht->table[i] != NULL) {
+            
+            fprintf(f, "src IP: %s dst IP: %s src port: %d dst port: %d proto: %d pkt_count: %d rx_bytes: %d index: %d\n", write_ipv4_addr(ht->table[i]->t.src_ip) , write_ipv4_addr(ht->table[i]->t.dst_ip), ht->table[i]->t.src_port, ht->table[i]->t.dst_port, ht->table[i]->t.proto, ht->table[i]->count, ht->table[i]->total_rx_bytes, i);
+        }
+    }
+    fclose(f);
+}
+
+
 // #endif
 // int main() {
 //     struct hash_table ht = {0};

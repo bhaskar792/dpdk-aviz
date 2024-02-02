@@ -421,10 +421,12 @@ lcore_main(void)
 					printf("dst port: %d\n", tuple_data->dst_port);
 					printf("proto: %d\n", tuple_data->proto);
 
-					
-					insert(&ht, *tuple_data);
+					// uint32_t rx_bytes = rte_pktmbuf_pkt_len(pkt);
+					insert(&ht, *tuple_data, rte_pktmbuf_pkt_len(pkt));
 					printf("Count for t1: %d\n", get_count(&ht, *tuple_data));
+					printf("size of bytes rx: %d\n", get_size(&ht, *tuple_data));
 					tuple_data = NULL;
+					save_hash_table(&ht, "hash_table.txt");
 				}
 			}
 			// printf("%u\n", nb_rx);
