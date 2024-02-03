@@ -20,7 +20,7 @@
 #define NUM_MBUFS 8191
 #define MBUF_CACHE_SIZE 250
 #define BURST_SIZE 32
-#define LOGGING 0
+#define LOGGING 4
 
 struct hash_table ht = { 0 };
 struct Node* head = NULL;
@@ -166,7 +166,7 @@ lcore_main(void)
 				"polling thread.\n\tPerformance will "
 				"not be optimal.\n", port);
 
-	printf("\nCore %u forwarding packets. [Ctrl+C to quit]\n",
+	printf("\nCore %u analysing packets. [Ctrl+C to quit]\n",
 		rte_lcore_id());
 
 	for (;;)
@@ -191,9 +191,9 @@ lcore_main(void)
 				{
 					ip_h = (struct rte_ipv4_hdr*)((char*)eth_h + sizeof(struct rte_ether_hdr));
 					tuple_data = malloc(sizeof(struct pkt_tuple));
-					if (LOGGING == 1)
+					if (LOGGING == 1 || LOGGING == 4)
 					{
-						ipv4_addr_dump("  IPV4: src=", ip_h->src_addr);
+						ipv4_addr_dump("\n\n\nIPV4: src=", ip_h->src_addr);
 						ipv4_addr_dump(" dst=", ip_h->dst_addr);
 						printf("Protocol: %d\n", ip_h->next_proto_id);
 					}
@@ -226,8 +226,9 @@ lcore_main(void)
 				if (tuple_data != NULL)
 				{
 					int index = insert(&ht, *tuple_data, rte_pktmbuf_pkt_len(pkt));
-					if (LOGGING == 2)
+					if (LOGGING == 2 || LOGGING == 4)
 					{
+						printf("\n\nPACKET DATA\n");
 						printf("src ip: %x\n", tuple_data->src_ip);
 						printf("dst ip: %x\n", tuple_data->dst_ip);
 						printf("src port: %d\n", tuple_data->src_port);
@@ -235,25 +236,26 @@ lcore_main(void)
 						printf("proto: %d\n", tuple_data->proto);
 						printf("index: %d\n", index);
 						printf("Count for tuple: %d\n", get_count(&ht, *tuple_data));
-						printf("size of bytes rx: %d\n", get_size(&ht, *tuple_data));
+						printf("size of bytes rx: %d\n\n", get_size(&ht, *tuple_data));
 					}
 					
 					insertNode(&head, &tail, index);
-					if (LOGGING == 3)
+					if (LOGGING == 3 || LOGGING == 4)
 					{
+						printf("List of keys\n");
 						printList(head);
 					}
 					struct removedKeys* remove_hash = removeOldNodes(&head, &tail);
 					struct removedKeys* temp = remove_hash;
-					if (LOGGING == 3)
+					if (LOGGING == 3 || LOGGING == 4)
 					{
-						printf("After removing old nodes\n");
+						printf("\nAfter removing old nodes\n");
 						printList(head);
 					}
 
 					while (temp != NULL) 
 					{
-						if (LOGGING == 3)
+						if (LOGGING == 3 ||LOGGING == 4)
 						{
 							printf("Removed key: %d || src ip: %x\n", temp->keys, ht.table[temp->keys]->t.src_ip);
 						}
