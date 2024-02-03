@@ -129,3 +129,11 @@ void printList(struct Node* node)
 		node = node->next;
 	}
 }
+
+/*
+- `void deleteNode(struct Node** head_ref, struct Node** tail_ref, int key)` - deletes the node with the given key from the list
+- `void deleteAllNodes(struct Node** head_ref, struct Node** tail_ref, int key)` - deletes all nodes with the given key from the list
+- `void insertNode(struct Node** head_ref, struct Node** tail_ref, int key)` - inserts a new node with the given key at the beginning of the list and updates the time if key already exists
+- `struct removedKeys* removeOldNodes(struct Node** head_ref, struct Node** tail_ref)` - removes all nodes from the list that are older than 60 seconds and returns a list of removed keys
+- `void printList(struct Node* node)` - prints the list of nodes
+*/
