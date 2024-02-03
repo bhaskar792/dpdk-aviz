@@ -54,7 +54,7 @@ sudo dpdk-devbind.py -b vfio-pci 02:01.0 (PCI address from dpdk-devbind.py -s)
 sudo dpdk-devbind.py -b e1000 02:01.0
 ```
 
-### 3. Test traffic analysis task
+### 3. Test [traffic analysis task](https://github.com/bhaskar792/dpdk-aviz/tree/main/examples/traffic_analysis) 
 #### Start traffic analysis tool
 
 ```
@@ -79,5 +79,5 @@ sendp(Ether()/IP(dst="1.2.3.4",ttl=(1,1))/TCP(sport=1,dport=87), iface="VMware V
  - log level 2 logs the packet tuples as they are being stored in the hash table
  - log level 3 logs the updates on the hash table as index are being expired with the timer
 
-> more details about the program in local README file of basic stats
+> more details about the program in local [README file of basic stats](https://github.com/bhaskar792/dpdk-aviz/blob/main/examples/traffic_analysis/readme.md)
 
