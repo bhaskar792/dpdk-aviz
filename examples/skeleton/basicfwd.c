@@ -11,8 +11,8 @@
 #include <rte_lcore.h>
 #include <rte_mbuf.h>
 #include <netinet/in.h>
-#include "addHash.h"
-#include "updateHashTable.h"
+#include "store_tuple.h"
+#include "hash_timer.h"
 
 #define RX_RING_SIZE 1024
 #define TX_RING_SIZE 1024
