@@ -84,21 +84,12 @@ void insertNode(struct Node** head_ref, struct Node** tail_ref, int key)
 	{
 		*tail_ref = new_node;
 	}
-	// printf("INSERT head key  %ld", (*head_ref)->time);
-	// printf("tail key %ld\n\n", (*tail_ref)->time);
-	// printf("all Key in list:");
-	// while(new_node != NULL) {
-	//     printf(" %d ||", new_node->key);
-	//     new_node = new_node->next;
-	// }
 }
 
 struct removedKeys* removeOldNodes(struct Node** head_ref, struct Node** tail_ref)
 {
 	struct Node* temp = *tail_ref;
 	struct Node* head = *head_ref;
-	// printf("REMOVE head key %ld", (*head_ref)->time);
-	// printf("tail key %ld\n\n", (*tail_ref)->time);
 	time_t now = time(NULL);
 	struct removedKeys* removed_keys_ptr = NULL;
 	struct removedKeys* removed_keys_head = NULL;

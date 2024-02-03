@@ -130,163 +130,7 @@ ipv4_addr_dump(const char* what, uint32_t be_ipv4_addr)
 		printf("%s", what);
 	printf("%s", buf);
 }
-static const char*
-ip_proto_name(uint16_t ip_proto)
-{
-	static const char* ip_proto_names[] = {
-		"IP6HOPOPTS", /**< IP6 hop-by-hop options */
-		"ICMP",       /**< control message protocol */
-		"IGMP",       /**< group mgmt protocol */
-		"GGP",        /**< gateway^2 (deprecated) */
-		"IPv4",       /**< IPv4 encapsulation */
 
-		"UNASSIGNED",
-		"TCP",        /**< transport control protocol */
-		"ST",         /**< Stream protocol II */
-		"EGP",        /**< exterior gateway protocol */
-		"PIGP",       /**< private interior gateway */
-
-		"RCC_MON",    /**< BBN RCC Monitoring */
-		"NVPII",      /**< network voice protocol*/
-		"PUP",        /**< pup */
-		"ARGUS",      /**< Argus */
-		"EMCON",      /**< EMCON */
-
-		"XNET",       /**< Cross Net Debugger */
-		"CHAOS",      /**< Chaos*/
-		"UDP",        /**< user datagram protocol */
-		"MUX",        /**< Multiplexing */
-		"DCN_MEAS",   /**< DCN Measurement Subsystems */
-
-		"HMP",        /**< Host Monitoring */
-		"PRM",        /**< Packet Radio Measurement */
-		"XNS_IDP",    /**< xns idp */
-		"TRUNK1",     /**< Trunk-1 */
-		"TRUNK2",     /**< Trunk-2 */
-
-		"LEAF1",      /**< Leaf-1 */
-		"LEAF2",      /**< Leaf-2 */
-		"RDP",        /**< Reliable Data */
-		"IRTP",       /**< Reliable Transaction */
-		"TP4",        /**< tp-4 w/ class negotiation */
-
-		"BLT",        /**< Bulk Data Transfer */
-		"NSP",        /**< Network Services */
-		"INP",        /**< Merit Internodal */
-		"SEP",        /**< Sequential Exchange */
-		"3PC",        /**< Third Party Connect */
-
-		"IDPR",       /**< InterDomain Policy Routing */
-		"XTP",        /**< XTP */
-		"DDP",        /**< Datagram Delivery */
-		"CMTP",       /**< Control Message Transport */
-		"TPXX",       /**< TP++ Transport */
-
-		"ILTP",       /**< IL transport protocol */
-		"IPv6_HDR",   /**< IP6 header */
-		"SDRP",       /**< Source Demand Routing */
-		"IPv6_RTG",   /**< IP6 routing header */
-		"IPv6_FRAG",  /**< IP6 fragmentation header */
-
-		"IDRP",       /**< InterDomain Routing*/
-		"RSVP",       /**< resource reservation */
-		"GRE",        /**< General Routing Encap. */
-		"MHRP",       /**< Mobile Host Routing */
-		"BHA",        /**< BHA */
-
-		"ESP",        /**< IP6 Encap Sec. Payload */
-		"AH",         /**< IP6 Auth Header */
-		"INLSP",      /**< Integ. Net Layer Security */
-		"SWIPE",      /**< IP with encryption */
-		"NHRP",       /**< Next Hop Resolution */
-
-		"UNASSIGNED",
-		"UNASSIGNED",
-		"UNASSIGNED",
-		"ICMPv6",     /**< ICMP6 */
-		"IPv6NONEXT", /**< IP6 no next header */
-
-		"Ipv6DSTOPTS",/**< IP6 destination option */
-		"AHIP",       /**< any host internal protocol */
-		"CFTP",       /**< CFTP */
-		"HELLO",      /**< "hello" routing protocol */
-		"SATEXPAK",   /**< SATNET/Backroom EXPAK */
-
-		"KRYPTOLAN",  /**< Kryptolan */
-		"RVD",        /**< Remote Virtual Disk */
-		"IPPC",       /**< Pluribus Packet Core */
-		"ADFS",       /**< Any distributed FS */
-		"SATMON",     /**< Satnet Monitoring */
-
-		"VISA",       /**< VISA Protocol */
-		"IPCV",       /**< Packet Core Utility */
-		"CPNX",       /**< Comp. Prot. Net. Executive */
-		"CPHB",       /**< Comp. Prot. HeartBeat */
-		"WSN",        /**< Wang Span Network */
-
-		"PVP",        /**< Packet Video Protocol */
-		"BRSATMON",   /**< BackRoom SATNET Monitoring */
-		"ND",         /**< Sun net disk proto (temp.) */
-		"WBMON",      /**< WIDEBAND Monitoring */
-		"WBEXPAK",    /**< WIDEBAND EXPAK */
-
-		"EON",        /**< ISO cnlp */
-		"VMTP",       /**< VMTP */
-		"SVMTP",      /**< Secure VMTP */
-		"VINES",      /**< Banyon VINES */
-		"TTP",        /**< TTP */
-
-		"IGP",        /**< NSFNET-IGP */
-		"DGP",        /**< dissimilar gateway prot. */
-		"TCF",        /**< TCF */
-		"IGRP",       /**< Cisco/GXS IGRP */
-		"OSPFIGP",    /**< OSPFIGP */
-
-		"SRPC",       /**< Strite RPC protocol */
-		"LARP",       /**< Locus Address Resolution */
-		"MTP",        /**< Multicast Transport */
-		"AX25",       /**< AX.25 Frames */
-		"4IN4",       /**< IP encapsulated in IP */
-
-		"MICP",       /**< Mobile Int.ing control */
-		"SCCSP",      /**< Semaphore Comm. security */
-		"ETHERIP",    /**< Ethernet IP encapsulation */
-		"ENCAP",      /**< encapsulation header */
-		"AES",        /**< any private encr. scheme */
-
-		"GMTP",       /**< GMTP */
-		"IPCOMP",     /**< payload compression (IPComp) */
-		"UNASSIGNED",
-		"UNASSIGNED",
-		"PIM",        /**< Protocol Independent Mcast */
-	};
-
-	if (ip_proto < RTE_DIM(ip_proto_names))
-		return ip_proto_names[ip_proto];
-	switch (ip_proto) {
-#ifdef IPPROTO_PGM
-	case IPPROTO_PGM:  /**< PGM */
-		return "PGM";
-#endif
-	case IPPROTO_SCTP:  /**< Stream Control Transport Protocol */
-		return "SCTP";
-#ifdef IPPROTO_DIVERT
-	case IPPROTO_DIVERT: /**< divert pseudo-protocol */
-		return "DIVERT";
-#endif
-	case IPPROTO_RAW: /**< raw IP packet */
-		return "RAW";
-	default:
-		break;
-	}
-	return "UNASSIGNED";
-}
-/*
- * The lcore main. This is the main thread that does the work, reading from
- * an input port and writing to an output port.
- */
-
- /* Basic forwarding application lcore. 8< */
 static __rte_noreturn void
 lcore_main(void)
 {
@@ -313,10 +157,6 @@ lcore_main(void)
 		uint8_t* byte;
 	} h;
 
-	/*
-	 * Check that the port is on the same NUMA node as the polling thread
-	 * for best performance.
-	 */
 	RTE_ETH_FOREACH_DEV(port)
 		if (rte_eth_dev_socket_id(port) >= 0 &&
 			rte_eth_dev_socket_id(port) !=
@@ -356,12 +196,10 @@ lcore_main(void)
 					// ipv4_src_addr = rte_be_to_cpu_32(ip_h->src_addr);
 					// ipv4_dst_addr = rte_be_to_cpu_32(ip_h->dst_addr);
 					// proto = ip_h->next_proto_id;
+					// printf("Protocol: %d\n", ip_h->next_proto_id);
 
-					// print proto
 					// ipv4_addr_dump(" dst=", ip_h->dst_addr);
-					// printf(" proto=%d (%s)\n",
-					// 	ip_h->next_proto_id,
-					// 	ip_proto_name(ip_h->next_proto_id));
+
 					if (ip_h->next_proto_id == IPPROTO_TCP)
 					{
 						tcp_h = (struct rte_tcp_hdr*)((char*)ip_h + sizeof(struct rte_ipv4_hdr));
@@ -399,20 +237,20 @@ lcore_main(void)
 
 					// uint32_t rx_bytes = rte_pktmbuf_pkt_len(pkt);
 					int index = insert(&ht, *tuple_data, rte_pktmbuf_pkt_len(pkt));
-					printf("index: %d\n", index);
+					// printf("index: %d\n", index);
 					// printf("Count for t1: %d\n", get_count(&ht, *tuple_data));
 					// printf("size of bytes rx: %d\n", get_size(&ht, *tuple_data));
 
 
 					insertNode(&head, &tail, index);
-					printList(head);
+					// printList(head);
 					struct removedKeys* remove_hash = removeOldNodes(&head, &tail);
 					struct removedKeys* temp = remove_hash;
-					printf("\n\n");
-					printList(head);
+					// printf("\n\n");
+					// printList(head);
 
 					while (temp != NULL) {
-						printf("Removed key: %d ||", temp->keys);
+						// printf("Removed key: %d ||", temp->keys);
 						remove_index(&ht, temp->keys);
 						// printf("removed src ip: %x\n", ht.table[temp->keys]->t.src_ip);
 						temp = temp->next;
