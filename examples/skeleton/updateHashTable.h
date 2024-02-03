@@ -46,7 +46,19 @@ void deleteNode(struct Node** head_ref, struct Node** tail_ref, int key) {
     free(temp);
 }
 
+// delete all nodes of the given key
+void deleteAllNodes(struct Node** head_ref, struct Node** tail_ref, int key) {
+    struct Node* temp = *head_ref;
+    while (temp != NULL) {
+        if (temp->key == key) {
+            deleteNode(head_ref, tail_ref, key);
+        }
+        temp = temp->next;
+    }
+}
+
 void insertNode(struct Node** head_ref, struct Node** tail_ref, int key) {
+    deleteNode(head_ref, tail_ref, key);
     struct Node* new_node = (struct Node*)malloc(sizeof(struct Node));
     new_node->key = key;
     new_node->time = time(NULL);
@@ -59,8 +71,8 @@ void insertNode(struct Node** head_ref, struct Node** tail_ref, int key) {
     if (*tail_ref == NULL) {
         *tail_ref = new_node;
     }
-    printf("INSERT head key  %ld", (*head_ref)->time);
-    printf("tail key %ld\n\n", (*tail_ref)->time);
+    // printf("INSERT head key  %ld", (*head_ref)->time);
+    // printf("tail key %ld\n\n", (*tail_ref)->time);
     // print all keys
     // printf("all Key in list:");
     // while(new_node != NULL) {
@@ -72,8 +84,8 @@ void insertNode(struct Node** head_ref, struct Node** tail_ref, int key) {
 struct removedKeys* removeOldNodes(struct Node** head_ref, struct Node** tail_ref) {
     struct Node* temp = *tail_ref;
     struct Node* head = *head_ref;
-    printf("REMOVE head key %ld", (*head_ref)->time);
-    printf("tail key %ld\n\n", (*tail_ref)->time);
+    // printf("REMOVE head key %ld", (*head_ref)->time);
+    // printf("tail key %ld\n\n", (*tail_ref)->time);
     time_t now = time(NULL);
     struct removedKeys* removed_keys_ptr = NULL;
     struct removedKeys* removed_keys_head = NULL;
