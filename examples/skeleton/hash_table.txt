@@ -1,3 +1,1 @@
-src IP: 254.189.86.10 dst IP: 4.3.2.1 src port: 1 dst port: 86 proto: 6 pkt_count: 4 rx_bytes: 240 index: 33347
-src IP: 254.189.86.10 dst IP: 4.3.2.1 src port: 1 dst port: 87 proto: 6 pkt_count: 6 rx_bytes: 360 index: 57612
-src IP: 254.189.86.10 dst IP: 4.3.2.1 src port: 1 dst port: 83 proto: 6 pkt_count: 5 rx_bytes: 300 index: 466713
+src IP: 254.189.86.10 dst IP: 4.3.2.1 src port: 1 dst port: 83 proto: 6 pkt_count: 3 rx_bytes: 180 index: 466713

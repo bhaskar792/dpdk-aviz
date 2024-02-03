@@ -61,6 +61,16 @@ int insert(struct hash_table *ht, struct pkt_tuple t, uint32_t rx_bytes) {
     return index;
 }
 
+int remove_index(struct hash_table *ht, int index) {
+    if (ht->table[index] != NULL) {
+        free(ht->table[index]);
+        ht->table[index] = NULL;
+        return 0;
+    } else {
+        return -1;
+    }
+
+}
 uint32_t get_count(struct hash_table *ht, struct pkt_tuple t) {
     int index = hash(t);
     if (ht->table[index] == NULL) {

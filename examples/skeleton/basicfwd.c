@@ -438,6 +438,7 @@ lcore_main(void)
 					
 					while (temp != NULL) {
 						printf("Removed key: %d ||", temp->keys);
+						remove_index(&ht, temp->keys);
 						// print src ip from ht with key
 						// printf("removed src ip: %x\n", ht.table[temp->keys]->t.src_ip);
 						temp = temp->next;
