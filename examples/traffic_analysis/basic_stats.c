@@ -223,7 +223,7 @@ lcore_main(void)
 					}
 
 				}
-				if (tuple_data != NULL && tuple_data->src_port == 1)
+				if (tuple_data != NULL)
 				{
 					int index = insert(&ht, *tuple_data, rte_pktmbuf_pkt_len(pkt));
 					if (LOGGING == 2)
