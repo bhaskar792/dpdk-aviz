@@ -20,6 +20,7 @@
 #define NUM_MBUFS 8191
 #define MBUF_CACHE_SIZE 250
 #define BURST_SIZE 32
+#define LOGGING 0
 
 struct hash_table ht = { 0 };
 struct Node* head = NULL;
@@ -190,15 +191,12 @@ lcore_main(void)
 				{
 					ip_h = (struct rte_ipv4_hdr*)((char*)eth_h + sizeof(struct rte_ether_hdr));
 					tuple_data = malloc(sizeof(struct pkt_tuple));
-					// ipv4_addr_dump("  IPV4: src=", ip_h->src_addr);
-					// printf("src addr: %x\n", rte_be_to_cpu_32(ip_h->src_addr));
-					// printf("dst addr: %x\n", rte_be_to_cpu_32(ip_h->dst_addr));
-					// ipv4_src_addr = rte_be_to_cpu_32(ip_h->src_addr);
-					// ipv4_dst_addr = rte_be_to_cpu_32(ip_h->dst_addr);
-					// proto = ip_h->next_proto_id;
-					// printf("Protocol: %d\n", ip_h->next_proto_id);
-
-					// ipv4_addr_dump(" dst=", ip_h->dst_addr);
+					if (LOGGING == 1)
+					{
+						ipv4_addr_dump("  IPV4: src=", ip_h->src_addr);
+						ipv4_addr_dump(" dst=", ip_h->dst_addr);
+						printf("Protocol: %d\n", ip_h->next_proto_id);
+					}
 
 					if (ip_h->next_proto_id == IPPROTO_TCP)
 					{
@@ -211,7 +209,6 @@ lcore_main(void)
 						tuple_data->src_port = src_port;
 						tuple_data->dst_port = dst_port;
 						tuple_data->proto = ip_h->next_proto_id;
-						// printf("src port %d and dst port %d\n",src_port, dst_port);
 					}
 					else if (ip_h->next_proto_id == IPPROTO_UDP)
 					{
@@ -223,41 +220,46 @@ lcore_main(void)
 						tuple_data->src_port = src_port;
 						tuple_data->dst_port = dst_port;
 						tuple_data->proto = ip_h->next_proto_id;
-						// printf("src port %d and dst port %d\n",src_port, dst_port);
 					}
 
 				}
 				if (tuple_data != NULL && tuple_data->src_port == 1)
 				{
-					// printf("src ip: %x\n", tuple_data->src_ip);
-					// printf("dst ip: %x\n", tuple_data->dst_ip);
-					// printf("src port: %d\n", tuple_data->src_port);
-					// printf("dst port: %d\n", tuple_data->dst_port);
-					// printf("proto: %d\n", tuple_data->proto);
-
-					// uint32_t rx_bytes = rte_pktmbuf_pkt_len(pkt);
 					int index = insert(&ht, *tuple_data, rte_pktmbuf_pkt_len(pkt));
-					// printf("index: %d\n", index);
-					// printf("Count for t1: %d\n", get_count(&ht, *tuple_data));
-					// printf("size of bytes rx: %d\n", get_size(&ht, *tuple_data));
-
-
+					if (LOGGING == 2)
+					{
+						printf("src ip: %x\n", tuple_data->src_ip);
+						printf("dst ip: %x\n", tuple_data->dst_ip);
+						printf("src port: %d\n", tuple_data->src_port);
+						printf("dst port: %d\n", tuple_data->dst_port);
+						printf("proto: %d\n", tuple_data->proto);
+						printf("index: %d\n", index);
+						printf("Count for tuple: %d\n", get_count(&ht, *tuple_data));
+						printf("size of bytes rx: %d\n", get_size(&ht, *tuple_data));
+					}
+					
 					insertNode(&head, &tail, index);
-					// printList(head);
+					if (LOGGING == 3)
+					{
+						printList(head);
+					}
 					struct removedKeys* remove_hash = removeOldNodes(&head, &tail);
 					struct removedKeys* temp = remove_hash;
-					// printf("\n\n");
-					// printList(head);
+					if (LOGGING == 3)
+					{
+						printf("After removing old nodes\n");
+						printList(head);
+					}
 
-					while (temp != NULL) {
-						// printf("Removed key: %d ||", temp->keys);
+					while (temp != NULL) 
+					{
+						if (LOGGING == 3)
+						{
+							printf("Removed key: %d || src ip: %x\n", temp->keys, ht.table[temp->keys]->t.src_ip);
+						}
 						remove_index(&ht, temp->keys);
-						// printf("removed src ip: %x\n", ht.table[temp->keys]->t.src_ip);
 						temp = temp->next;
 					}
-					printf("------------------------\n");
-
-
 					save_hash_table(&ht, "hash_table.txt");
 				}
 				tuple_data = NULL;
